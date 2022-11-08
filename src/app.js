@@ -1,9 +1,12 @@
 import React from "react";
 import { ethers } from 'ethers';
 import dao from './DAO.json';
-const MerkleTree = require("./merkleTree.js");
+import MerkleTree from "./merkleTree.js";
+import path from "path";
+import BigInt from "big-integer";
 const DAO_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-const snarkjs = require("snarkjs");
+
+const snarkjs = window.snarkjs;
 
 const genCallData = async (proof, publicSignals) => {
     var callData = (
@@ -17,7 +20,7 @@ const genCallData = async (proof, publicSignals) => {
     let a,
         b = [],
         c,
-        publics;
+        publicInputs;
     a = callData.slice(0, 2).map((e) => BigInt(e));
     b[0] = callData.slice(2, 4).map((e) => BigInt(e));
     b[1] = callData.slice(4, 6).map((e) => BigInt(e));
@@ -39,26 +42,25 @@ export class App extends React.Component {
             await this.requestAccount();
             const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-
             //signer needed for transaction that changes state
-
             const signer = provider.getSigner();
             console.log(signer);
             const contract = new ethers.Contract(DAO_ADDRESS, dao.abi, signer);
 
             //try to get the greeting in the contract
-            try {
-                const power = await contract.power(await signer.getAddress());
-                const index = await contract.index(await signer.getAddress());
-                this.setState({ power: Number(power), index: Number(index) });
-            } catch (e) {
-                console.log("Err: ", e)
+
+            const power = await contract.power(await signer.getAddress());
+            const index = await contract.index(await signer.getAddress());
+            this.setState({ power: Number(power), index: Number(index) });
+            if (index == 0) {
+                document.getElementById("create_leaf").removeAttribute("hidden");
             }
         }
     }
 
-    async addPower(additionPower) {
-        if (additionPower && typeof window.ethereum !== "undefined") {
+    async addPower(additionPower, secret) {
+        console.log(additionPower, secret)
+        if (additionPower && secret && typeof window.ethereum !== "undefined") {
             //ethereum is usable, get reference to the contract
             await this.requestAccount();
             const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -75,6 +77,8 @@ export class App extends React.Component {
             const array = data.map((x) => {
                 return { index: x.args["index"], leaf: x.args["leaf"] }
             })
+
+
 
             const tree = new MerkleTree(5);
             await tree.init();
@@ -96,6 +100,8 @@ export class App extends React.Component {
             const { a, b, c, publicInputs } = await genCallData(proof, publicSignals);
             const transaction = await contract.addPower(a, b, c, publicInputs[1], publicInputs[4], { value: additionPower });
             await transaction.wait();
+            //console.log(a, b, c);
+            document.getElementById("create_leaf").setAttribute("hidden", " hidden");
             this.fetchData();
         }
     }
@@ -143,29 +149,43 @@ export class App extends React.Component {
 
     render() {
         return (
-            <div>
-                <h1>Power: {this.state.power}</h1>
-                <h1>Index: {this.state.index}</h1>
-                <button onClick={() => this.fetchData()}>Get Data</button>
-                <hr />
-                <input id={"addition-power"} placeholder={"Addition power"} />
-                <button onClick={() => {
-                    const addtionPower = document.getElementById("addition-power").value;
-                    this.addPower(addtionPower);
-                }}>Add Power</button>
-                <hr />
-                <hr />
-                <hr />
+
+            <div class="center">
+
+                <button id="btn_connect_metamask" onClick={() => {
+                    this.fetchData();
+                    document.getElementById("btn_connect_metamask").setAttribute("hidden", "hidden");
+                }}>Connect metamask</button>
+
+                <p>Power: {this.state.power}</p>
+                <p>Index: {this.state.index}</p>
+                <div id="create_leaf" hidden>
+                    <br />
+                    <input id={"secret-x"} placeholder={"Secret"} />
+                    <br />
+                    <br />
+                    <input id={"addition-power"} placeholder={"Addition power"} />
+                    <br />
+                    <br />
+                    <button onClick={() => {
+                        const addtionPower = document.getElementById("addition-power").value;
+                        const secret = document.getElementById("secret-x").value;
+                        this.addPower(addtionPower, secret);
+                    }}>Create Power</button>
+                </div>
+                <br />
+                <br />
+                <br />
                 <input id={"secret"} placeholder={"Secret"} />
-                <hr />
+                <br /><br />
                 <input id={"power"} placeholder={"Power"} />
-                <hr />
+                <br /><br />
                 <input id={"electionID"} placeholder={"ElectionID"} />
-                <hr />
+                <br /><br />
                 <input id={"points"} placeholder={"Points"} />
-                <hr />
+                <br /><br />
                 <input id={"option"} placeholder={"Option"} />
-                <hr />
+                <br /><br />
                 <button onClick={() => {
                     const secret = document.getElementById("secret").value;
                     const power = document.getElementById("power").value;
@@ -174,7 +194,7 @@ export class App extends React.Component {
                     const option = document.getElementById("option").value;
                     this.vote(secret, power, electionID, points, option);
                 }}>Vote</button>
-            </div>
+            </div >
         )
     }
 }

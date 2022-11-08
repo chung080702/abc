@@ -1,5 +1,4 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("hardhat-deploy");
 
 module.exports = {
     defaultNetwork: "hardhat",

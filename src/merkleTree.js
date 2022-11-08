@@ -1,6 +1,6 @@
-const { buildPoseidon } = require("circomlibjs");
+import { buildPoseidon } from "circomlibjs";
 
-module.exports = class MerkleTree {
+class MerkleTree {
     constructor(levels) {
         this.levels = levels;
         this.nextIndex = 1;
@@ -39,7 +39,7 @@ module.exports = class MerkleTree {
             //console.log(currentLevelHash);
             this.nodes[i][currentIndex] = currentLevelHash;
 
-            if (currentIndex % 2 == 0) {
+            if (currentIndex % 2 === 0) {
                 left = currentLevelHash;
                 right = this.nodes[i][currentIndex ^ 1];
             } else {
@@ -107,3 +107,5 @@ module.exports = class MerkleTree {
     }
 
 }
+
+export default MerkleTree;
