@@ -57,7 +57,8 @@ contract DAO {
                     power[msg.sender] + msg.value,
                     newLeaf
                 ]
-            )
+            ),
+            "proof wrong"
         );
         power[msg.sender] += msg.value;
         currentRoot = newRoot;

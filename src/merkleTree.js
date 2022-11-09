@@ -31,7 +31,7 @@ class MerkleTree {
 
     _update = (_leaf, index) => {
         var currentIndex = index;
-        var currentLevelHash = _leaf;
+        var currentLevelHash = _leaf.toString();
         var left;
         var right;
 
@@ -70,7 +70,7 @@ class MerkleTree {
         input.oldLeaf = this.nodes[0][index];
         input.index = index;
         input.secret = secret;
-        input.power = power;
+        input.power = power.toString();
         input.pathElements = this.getPath(index).pathElements;
         input.pathIndices = this.getPath(index).pathIndices;
         input.newLeaf = this.hashLeftRight(secret, power);
